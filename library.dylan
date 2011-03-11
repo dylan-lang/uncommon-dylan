@@ -48,7 +48,12 @@ define module uncommon-dylan
     <trie-error>,
 
     <nonnegative-integer>,
-    <positive-integer>;
+    <positive-integer>,
+
+    slice,
+    elt,
+    starts-with?,
+    ends-with?;
 
 end module uncommon-dylan;
 

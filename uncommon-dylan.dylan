@@ -421,3 +421,49 @@ define constant <positive-integer> = limited(<integer>, min: 1);
 
 
 //// Collection functions
+
+// TODO: slice! and slice!-setter ?
+
+define method slice
+    (seq :: <sequence>, bpos :: <integer>, epos :: false-or(<integer>))
+ => (slice :: <sequence>)
+  let len :: <integer> = seq.size;
+  let _bpos = max(0, iff(bpos < 0, len + bpos, bpos));
+  let _epos = iff(epos,
+                  min(len, iff(epos < 0, len + epos, epos)),
+                  len);
+  copy-sequence(seq, start: _bpos, end: _epos)
+end;
+
+define method starts-with?
+    (thing :: <object>, prefix :: <string>) => (yes? :: <boolean>)
+  #f
+end;
+
+define method starts-with?
+    (thing :: <string>, prefix :: <string>) => (yes? :: <boolean>)
+  slice(thing, 0, prefix.size) = prefix
+end;
+
+define method ends-with?
+    (thing :: <object>, suffix :: <string>) => (yes? :: <boolean>)
+  #f
+end;
+
+define method ends-with?
+    (thing :: <string>, suffix :: <string>) => (yes? :: <boolean>)
+  slice(thing, -suffix.size, #f) = suffix
+end;
+
+// Allow negative indexes.
+// The main reason this is worth having around is for when the expression
+// for getting the sequence is long.  It's not useful for x because
+// x[x.size - 1] is short, but for my-object.the-foo-sequence it starts
+// to look pretty bad.
+//
+define method elt
+    (seq :: <sequence>, index :: <integer>) => (element :: <object>)
+  seq[iff(index < 0, seq.size + index, index)]
+end;
+
+
