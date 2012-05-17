@@ -51,9 +51,7 @@ define module uncommon-dylan
     <positive-integer>,
 
     slice,
-    elt,
-    starts-with?,
-    ends-with?;
+    elt;
 
 end module uncommon-dylan;
 
