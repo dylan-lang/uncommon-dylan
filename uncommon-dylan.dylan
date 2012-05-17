@@ -435,26 +435,6 @@ define method slice
   copy-sequence(seq, start: _bpos, end: _epos)
 end;
 
-define method starts-with?
-    (thing :: <object>, prefix :: <string>) => (yes? :: <boolean>)
-  #f
-end;
-
-define method starts-with?
-    (thing :: <string>, prefix :: <string>) => (yes? :: <boolean>)
-  slice(thing, 0, prefix.size) = prefix
-end;
-
-define method ends-with?
-    (thing :: <object>, suffix :: <string>) => (yes? :: <boolean>)
-  #f
-end;
-
-define method ends-with?
-    (thing :: <string>, suffix :: <string>) => (yes? :: <boolean>)
-  slice(thing, -suffix.size, #f) = suffix
-end;
-
 // Allow negative indexes.
 // The main reason this is worth having around is for when the expression
 // for getting the sequence is long.  It's not useful for x because
