@@ -2,6 +2,7 @@ Module:   uncommon-dylan
 Synopsis: Some definitions of general use that could be considered for
           inclusion in common-dylan if they stand the test of time.
 Author:   Carl Gay
+Copyright: See LICENSE in this distribution for details.
 
 
 // ---TODO: Add an equal? method, that is like = but does case insensitive
@@ -133,10 +134,10 @@ define method string-to-float(s :: <string>) => (f :: <float>)
   let sign = 1;
 
   local method process-char(ch :: <character>)
-    select(state)
+    select (state)
       #"start" =>
-        select(ch)
-          '-' => 
+        select (ch)
+          '-' =>
             begin
               sign := -1;
               state := #"lhs";
@@ -157,7 +158,7 @@ define method string-to-float(s :: <string>) => (f :: <float>)
               process-char(ch);
             end;
         end select;
-      #"lhs" => 
+      #"lhs" =>
         case
           is-digit?(ch) => lhs := add!(lhs, ch);
           ch == '.' => state := #"rhs";
@@ -172,15 +173,15 @@ define method string-to-float(s :: <string>) => (f :: <float>)
     end select;
   end method;
 
-  for(ch in s)
+  for (ch in s)
     process-char(ch);
   end for;
 
   let lhs = as(<string>, lhs);
-  let rhs = if(empty?(rhs)) "0" else as(<string>, rhs) end;
+  let rhs = if (empty?(rhs)) "0" else as(<string>, rhs) end;
   (string-to-integer(lhs) * sign)
    + as(<double-float>, string-to-integer(rhs) * sign)
-     / (10 ^ min(rhs.size, 7)); 
+     / (10 ^ min(rhs.size, 7));
 end method string-to-float;
 
 // Convert a floating point to a string without the Dylan specific formatting.
@@ -198,29 +199,29 @@ define method float-to-formatted-string
   let tp = subsequence-position(s, "d") | subsequence-position(s, "s") | s.size;
   let lhs = copy-sequence(s, end: dp);
   let rhs = copy-sequence(s, start: dp + 1, end: tp);
-  let shift = if(tp = s.size) 0  else string-to-integer(s, start: tp + 1) end;
+  let shift = if (tp = s.size) 0  else string-to-integer(s, start: tp + 1) end;
   let result = "";
   let temp = concatenate(lhs, rhs);
   let d = lhs.size - 1 + shift;
-  if(shift < 0)
-    for(n from 0 below abs(shift))
+  if (shift < 0)
+    for (n from 0 below abs(shift))
       temp := concatenate("0", temp);
     end for;
     d := 0;
-  elseif(shift > 0)
-    for(n from 0 below shift)
+  elseif (shift > 0)
+    for (n from 0 below shift)
       temp := concatenate(temp, "0");
     end for;
     d := temp.size;
   end if;
-      
+
   let tsize = temp.size;
   concatenate(copy-sequence(temp, start: 0, end: min(d + 1, tsize)),
               iff(d = tsize, "", "."),
               iff(d = tsize,
                   "",
-                  copy-sequence(temp, 
-                                start: d + 1, 
+                  copy-sequence(temp,
+                                start: d + 1,
                                 end: iff(decimal-places,
                                          min(d + 1 + decimal-places, tsize),
                                          tsize))));
@@ -345,7 +346,7 @@ define method add-object
             if (trie.trie-object = #f | replace?)
               trie.trie-object := object;
             else
-              signal(make(<trie-error>, 
+              signal(make(<trie-error>,
                           format-string: "Trie already contains an object for the "
                                          "given path (%=).",
                           format-arguments: list(path)));
