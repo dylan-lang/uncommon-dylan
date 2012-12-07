@@ -2,6 +2,7 @@ Module:   uncommon-dylan
 Synopsis: Some definitions of general use that could be considered for
           inclusion in common-dylan if they stand the test of time.
 Author:   Carl Gay
+Copyright: See LICENSE in this distribution for details.
 
 
 // ---TODO: Add an equal? method, that is like = but does case insensitive
