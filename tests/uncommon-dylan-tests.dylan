@@ -1,5 +1,6 @@
 Module: uncommon-dylan-test-suite
 Author: Carl Gay
+Copyright: See LICENSE in this distribution for details.
 
 define library-spec uncommon-dylan ()
   module uncommon-dylan;
