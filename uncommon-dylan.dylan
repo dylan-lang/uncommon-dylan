@@ -5,9 +5,6 @@ Author:   Carl Gay
 Copyright: See LICENSE in this distribution for details.
 
 
-// ---TODO: Add an equal? method, that is like = but does case insensitive
-//          string comparison.  Need string-equal? first.
-
 // ----------------------------------------------------------------------
 // bind introduces new bindings a la "let", but also introduces a new
 // block to limit the variables' scope.
@@ -106,11 +103,8 @@ end macro dec!;
 define macro wrapping-inc!
   { wrapping-inc! (?place:expression) }
     => { let n :: <integer> = ?place;
-         ?place := if (n == $maximum-integer)
-                     0
-                   else
-                     n + 1
-                   end; }
+         ?place := iff(n == $maximum-integer, 0, n + 1);
+       }
 end;
 
 
@@ -372,9 +366,10 @@ define method remove-object
  => ()
   let nodes = #[];
   let node = reduce(method (a, b)
-      nodes := add!(nodes, a);
-      a.trie-children[b]
-    end, trie, path);
+                      nodes := add!(nodes, a);
+                      a.trie-children[b]
+                    end,
+                    trie, path);
   let object = node.trie-object;
   node.trie-object := #f;
   block (stop)
