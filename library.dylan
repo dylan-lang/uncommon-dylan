@@ -1,7 +1,6 @@
 Module:   dylan-user
 Synopsis: Some definitions of general use that could be considered for
           inclusion in common-dylan if they stand the test of time.
-Author:   Carl Gay
 Copyright: See LICENSE in this distribution for details.
 
 define library uncommon-dylan
@@ -10,24 +9,50 @@ define library uncommon-dylan
   use common-dylan;
   use io,
     import: { streams };
-  export uncommon-dylan;
+  export
+    uncommon-dylan,
+    uncommon-utils;
 end;
 
+
+// A version of common-dylan that has shorter names for some common
+// (and core) definitions, without loss of readability in my
+// opinion. This is not a comprehensive list; I'll add more as I come
+// across them.
 define module uncommon-dylan
-  use dylan;
+  use common-dylan,
+    rename: { <object>    => <any>,
+              <boolean>   => <bool>,
+              <character> => <char>,
+              <function>  => <func>,
+              <integer>   => <int>,
+              <sequence>  => <seq>,
+              <string>    => <str>,
+              <table>     => <map>,
+              <string-table> => <str-map>,
+              <case-insensitive-string-table> => <istr-map>,
+
+              as-lowercase  => lowercase,
+              as-uppercase  => uppercase,
+              concatenate   => concat,
+              copy-sequence => copy-seq }, // See slice() in uncommon-utils
+    export: all;
+end module uncommon-dylan;
+
+define module uncommon-utils
   use collection-utilities,
     export: all;
-  use common-extensions;
-  use streams, import: { write, with-output-to-string };
+  use uncommon-dylan;
+  use streams,
+    import: { write,
+              with-output-to-string };
 
   export
-    \bind,              // like LET* in Common Lisp
-    \iff,               // more concise IF
-    \with-restart,
-    \with-simple-restart,
+    bind,              // like LET* in Common Lisp
+    iff,               // more concise IF, for simple cases
     <singleton-object>,
-    \inc!,              // like ++foo
-    \dec!,              // like --foo
+    inc!,              // like ++foo
+    dec!,              // like --foo
     string-to-float,
     // Wasn't sure whether to include this, since FunDev already has
     // float-to-string, but decided to keep it with a different name.
@@ -40,7 +65,7 @@ define module uncommon-dylan
 
     wrapping-inc!,
 
-    <string-trie>,
+    <str-trie>,
     find-object,
     add-object,
     remove-object,
@@ -48,11 +73,12 @@ define module uncommon-dylan
     trie-object,
     <trie-error>,
 
-    <nonnegative-integer>,
-    <positive-integer>,
+    <int*>, <int+>,
 
     slice,
-    elt;
+    elt,
 
-end module uncommon-dylan;
-
+    err,
+    with-restart,
+    with-simple-restart;
+end module uncommon-utils;

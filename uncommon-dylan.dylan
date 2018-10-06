@@ -1,7 +1,6 @@
-Module:   uncommon-dylan
+Module:   uncommon-utils
 Synopsis: Some definitions of general use that could be considered for
           inclusion in common-dylan if they stand the test of time.
-Author:   Carl Gay
 Copyright: See LICENSE in this distribution for details.
 
 
@@ -9,7 +8,7 @@ Copyright: See LICENSE in this distribution for details.
 // bind introduces new bindings a la "let", but also introduces a new
 // block to limit the variables' scope.
 //
-// bind (x = 1, y :: <string> = "y")
+// bind (x = 1, y :: <str> = "y")
 //   x + y
 // end
 //
@@ -69,11 +68,11 @@ end macro with-simple-restart;
 // ----------------------------------------------------------------------
 // define class <my-class> (<singleton-object>) ... end
 //
-define open abstract class <singleton-object> (<object>)
+define open abstract class <singleton-object> (<any>)
 end;
 
 // Maps classes to their singleton instances.
-define constant $singletons :: <table> = make(<table>);
+define constant $singletons :: <map> = make(<map>);
 
 define method make
     (class :: subclass(<singleton-object>), #rest args, #key)
@@ -102,7 +101,7 @@ end macro dec!;
 
 define macro wrapping-inc!
   { wrapping-inc! (?place:expression) }
-    => { let n :: <integer> = ?place;
+    => { let n :: <int> = ?place;
          ?place := iff(n == $maximum-integer, 0, n + 1);
        }
 end;
@@ -117,17 +116,17 @@ end;
 // getting integer overflow errors.  Should figure out the right
 // way...  -cgay
 //
-define method string-to-float(s :: <string>) => (f :: <float>)
-  local method is-digit?(ch :: <character>) => (b :: <boolean>)
-    let v = as(<integer>, ch);
-    v >= as(<integer>, '0') & v <= as(<integer>, '9');
+define method string-to-float(s :: <str>) => (f :: <float>)
+  local method is-digit?(ch :: <char>) => (b :: <bool>)
+    let v = as(<int>, ch);
+    v >= as(<int>, '0') & v <= as(<int>, '9');
   end method;
   let lhs = make(<stretchy-vector>);
   let rhs = make(<stretchy-vector>);
   let state = #"start";
   let sign = 1;
 
-  local method process-char(ch :: <character>)
+  local method process-char(ch :: <char>)
     select (state)
       #"start" =>
         select (ch)
@@ -171,8 +170,8 @@ define method string-to-float(s :: <string>) => (f :: <float>)
     process-char(ch);
   end for;
 
-  let lhs = as(<string>, lhs);
-  let rhs = if (empty?(rhs)) "0" else as(<string>, rhs) end;
+  let lhs = as(<str>, lhs);
+  let rhs = if (empty?(rhs)) "0" else as(<str>, rhs) end;
   (string-to-integer(lhs) * sign)
    + as(<double-float>, string-to-integer(rhs) * sign)
      / (10 ^ min(rhs.size, 7));
@@ -184,46 +183,46 @@ end method string-to-float;
 //
 define method float-to-formatted-string
     (value :: <float>, #key decimal-places)
- => (s :: <string>)
+ => (s :: <str>)
   let value = iff(decimal-places,
                   as(<double-float>, truncate(value * 10 ^ min(decimal-places, 7))) / 10d0 ^ decimal-places,
                   value);
   let s = float-to-string(value);
   let dp = subsequence-position(s, ".");
   let tp = subsequence-position(s, "d") | subsequence-position(s, "s") | s.size;
-  let lhs = copy-sequence(s, end: dp);
-  let rhs = copy-sequence(s, start: dp + 1, end: tp);
+  let lhs = copy-seq(s, end: dp);
+  let rhs = copy-seq(s, start: dp + 1, end: tp);
   let shift = if (tp = s.size) 0  else string-to-integer(s, start: tp + 1) end;
   let result = "";
-  let temp = concatenate(lhs, rhs);
+  let temp = concat(lhs, rhs);
   let d = lhs.size - 1 + shift;
   if (shift < 0)
     for (n from 0 below abs(shift))
-      temp := concatenate("0", temp);
+      temp := concat("0", temp);
     end for;
     d := 0;
   elseif (shift > 0)
     for (n from 0 below shift)
-      temp := concatenate(temp, "0");
+      temp := concat(temp, "0");
     end for;
     d := temp.size;
   end if;
 
   let tsize = temp.size;
-  concatenate(copy-sequence(temp, start: 0, end: min(d + 1, tsize)),
-              iff(d = tsize, "", "."),
-              iff(d = tsize,
-                  "",
-                  copy-sequence(temp,
-                                start: d + 1,
-                                end: iff(decimal-places,
-                                         min(d + 1 + decimal-places, tsize),
-                                         tsize))));
+  concat(copy-seq(temp, start: 0, end: min(d + 1, tsize)),
+         iff(d = tsize, "", "."),
+         iff(d = tsize,
+             "",
+             copy-seq(temp,
+                      start: d + 1,
+                      end: iff(decimal-places,
+                               min(d + 1 + decimal-places, tsize),
+                               tsize))));
 end method float-to-formatted-string;
 
 
 // TODO:
-//   as(<integer>, "123")
+//   as(<int>, "123")
 //   as(<single-float>, "123.0")
 //   as(<double-float>, "123.0")
 //   The equivalent works in Python, so why not Dylan?  The options
@@ -241,7 +240,7 @@ end method float-to-formatted-string;
 // passing them along with apply or next-method.
 //
 define method remove-keys
-    (arglist :: <sequence>, #rest keys-to-remove) => (x :: <list>)
+    (arglist :: <seq>, #rest keys-to-remove) => (x :: <list>)
   let result :: <list> = #();
   let last-pair = #f;
   for (i from 0 below arglist.size by 2)
@@ -265,7 +264,7 @@ end method remove-keys;
 // Seems like this should be in the core language.
 //
 define sideways method as
-    (type == <integer>, value :: <string>) => (i :: <integer>)
+    (type == <int>, value :: <str>) => (i :: <int>)
   string-to-integer(value)
 end;
 
@@ -284,7 +283,7 @@ end;
 
 // A complement to key-sequence
 define method value-sequence
-    (collection :: <explicit-key-collection>) => (seq :: <sequence>)
+    (collection :: <explicit-key-collection>) => (seq :: <seq>)
   let v :: <vector> = make(<vector>, size: collection.size);
   for (val keyed-by key in collection,
        i from 0)
@@ -300,14 +299,14 @@ end;
 // is reached, the theory being that it's common to want to know if there's
 // more than one of the given item.
 define open generic count
-    (collection :: <collection>, predicate :: <function>, #key limit)
- => (count :: <integer>);
+    (collection :: <collection>, predicate :: <func>, #key limit)
+ => (count :: <int>);
 
 define method count
-    (collection :: <collection>, predicate :: <function>,
-     #key limit :: false-or(<integer>))
- => (count :: <integer>)
-  let count :: <integer> = 0;
+    (collection :: <collection>, predicate :: <func>,
+     #key limit :: false-or(<int>))
+ => (count :: <int>)
+  let count :: <int> = 0;
   for (item in collection,
        while: ~limit | count < limit)
     if (predicate(item))
@@ -321,10 +320,10 @@ end method count;
 
 // This should be fixed not to be specifically for strings.
 
-define class <string-trie> (<object>)
-  constant slot trie-children :: <string-table>,
-    init-function: curry(make, <string-table>);
-  slot trie-object :: <object>,
+define class <str-trie> (<any>)
+  constant slot trie-children :: <str-map>,
+    init-function: curry(make, <str-map>);
+  slot trie-object :: <any>,
     required-init-keyword: object:;
 end;
 
@@ -332,7 +331,7 @@ define class <trie-error> (<format-string-condition>, <error>)
 end;
 
 define method add-object
-    (trie :: <string-trie>, path :: <sequence>, object :: <object>,
+    (trie :: <str-trie>, path :: <seq>, object :: <any>,
      #key replace?)
  => ()
   local method real-add (trie, rest-path)
@@ -347,11 +346,11 @@ define method add-object
             end if;
           else
             let first-path = rest-path[0];
-            let other-path = copy-sequence(rest-path, start: 1);
+            let other-path = copy-seq(rest-path, start: 1);
             let children = trie-children(trie);
             let child = element(children, first-path, default: #f);
             unless (child)
-              let node = make(<string-trie>, object: #f);
+              let node = make(<str-trie>, object: #f);
               children[first-path] := node;
               child := node;
             end;
@@ -362,7 +361,7 @@ define method add-object
 end method add-object;
 
 define method remove-object
-    (trie :: <string-trie>, path :: <sequence>)
+    (trie :: <str-trie>, path :: <seq>)
  => ()
   let nodes = #[];
   let node = reduce(method (a, b)
@@ -390,8 +389,8 @@ end method remove-object;
 // came after where the object matched.
 //
 define method find-object
-    (trie :: <string-trie>, path :: <sequence>)
- => (object :: <object>, rest-path :: <sequence>, prefix-path :: <sequence>)
+    (trie :: <str-trie>, path :: <seq>)
+ => (object :: <any>, rest-path :: <seq>, prefix-path :: <seq>)
   local method real-find (trie, path, object, prefix, rest)
           if (empty?(path))
             values(object, rest, reverse(prefix))
@@ -412,8 +411,8 @@ end method find-object;
 
 //// Type defs
 
-define constant <nonnegative-integer> = limited(<integer>, min: 0);
-define constant <positive-integer> = limited(<integer>, min: 1);
+define constant <int*> = limited(<int>, min: 0);
+define constant <int+> = limited(<int>, min: 1);
 
 
 //// Collection functions
@@ -421,25 +420,28 @@ define constant <positive-integer> = limited(<integer>, min: 1);
 // TODO: slice! and slice!-setter ?
 
 define method slice
-    (seq :: <sequence>, bpos :: <integer>, epos :: false-or(<integer>))
- => (slice :: <sequence>)
-  let len :: <integer> = seq.size;
-  let _bpos = max(0, iff(bpos < 0, len + bpos, bpos));
-  let _epos = iff(epos,
-                  min(len, iff(epos < 0, len + epos, epos)),
-                  len);
-  copy-sequence(seq, start: _bpos, end: _epos)
+    (seq :: <seq>, bpos :: <int*>, epos :: false-or(<int*>))
+ => (slice :: <seq>)
+  copy-seq(seq, start: bpos, end: epos)
 end;
 
-// Allow negative indexes.
-// The main reason this is worth having around is for when the expression
-// for getting the sequence is long.  It's not useful for x because
-// x[x.size - 1] is short, but for my-object.the-foo-sequence it starts
-// to look pretty bad.
-//
-define method elt
-    (seq :: <sequence>, index :: <integer>) => (element :: <object>)
-  seq[iff(index < 0, seq.size + index, index)]
+// One of my least favorite things in Dylan is having to switch from
+// c[i] syntax to element(c, i, default: d) just because there's a
+// rare case where the collection may contain #f. "elt" is perhaps
+// short enough that I can just use it all the time instead of c[i]
+// syntax. That's the problem I would like to solve.
+//   elt(collection, key, or: default)
+define macro elt
+  { elt(?c:expression, ?k:expression) } => { ?c[?k] }
+
+  { elt(?c:expression, ?k:expression, #key ?d:expression) }
+    =>
+  { element(?c, ?k, default: ?d) }
 end;
 
-
+// I'm leaving this here as a reminder to myself. Is there a better
+// name?
+define function err
+    (class :: <class>, message, #rest args)
+  error(make(class, format-string: message, format-arguments: args));
+end;
