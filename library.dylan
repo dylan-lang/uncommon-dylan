@@ -20,6 +20,8 @@ end;
 // opinion. This is not a comprehensive list; I'll add more as I come
 // across them.
 define module uncommon-dylan
+  // TODO: include some other frequently used basic items, like
+  //       format-out and format-err, directly in uncommon-dylan?
   use common-dylan,
     rename: { <object>    => <any>,
               <boolean>   => <bool>,
@@ -32,8 +34,6 @@ define module uncommon-dylan
               <string-table> => <str-map>,
               <case-insensitive-string-table> => <istr-map>,
 
-              as-lowercase  => lowercase,
-              as-uppercase  => uppercase,
               concatenate   => concat,
               copy-sequence => copy-seq }, // See slice() in uncommon-utils
     export: all;
@@ -51,8 +51,8 @@ define module uncommon-utils
     bind,              // like LET* in Common Lisp
     iff,               // more concise IF, for simple cases
     <singleton-object>,
-    inc!,              // like ++foo
-    dec!,              // like --foo
+    inc!,              // like ++foo (just call it ++?)
+    dec!,              // like --foo (just call it --?)
     string-to-float,
     // Wasn't sure whether to include this, since FunDev already has
     // float-to-string, but decided to keep it with a different name.

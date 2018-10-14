@@ -432,11 +432,9 @@ end;
 // syntax. That's the problem I would like to solve.
 //   elt(collection, key, or: default)
 define macro elt
-  { elt(?c:expression, ?k:expression) } => { ?c[?k] }
-
-  { elt(?c:expression, ?k:expression, #key ?d:expression) }
+  { elt(?c:expression, ?k:expression, #key ?or:expression) }
     =>
-  { element(?c, ?k, default: ?d) }
+  { element(?c, ?k, default: ?or) }
 end;
 
 // I'm leaving this here as a reminder to myself. Is there a better
