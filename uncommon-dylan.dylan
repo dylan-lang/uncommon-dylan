@@ -422,7 +422,7 @@ define constant <int+> = limited(<int>, min: 1);
 define method slice
     (seq :: <seq>, bpos :: <int*>, epos :: false-or(<int*>))
  => (slice :: <seq>)
-  copy-seq(seq, start: bpos, end: epos)
+  copy-seq(seq, start: bpos, end: epos | seq.size)
 end;
 
 // One of my least favorite things in Dylan is having to switch from
