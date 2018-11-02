@@ -4,6 +4,8 @@ Synopsis: Some definitions of general use that could be considered for
 Copyright: See LICENSE in this distribution for details.
 
 define library uncommon-dylan
+  use collections,
+    import: { table-extensions };
   use collection-extensions,
     import: { collection-utilities };
   use common-dylan;
@@ -21,21 +23,17 @@ end;
 // across them.
 define module uncommon-dylan
   use common-dylan,
-    rename: { <object>    => <any>,
-              <boolean>   => <bool>,
+    rename: { <boolean>   => <bool>,
               <character> => <char>,
-              <function>  => <func>,
+              <function>  => <fn>,
               <integer>   => <int>,
               <sequence>  => <seq>,
-              <string>    => <str>,
-              <table>     => <map>,
-              <string-table> => <str-map>,
-              <case-insensitive-string-table> => <istr-map>,
-
-              as-lowercase  => lowercase,
-              as-uppercase  => uppercase,
-              concatenate   => concat,
-              copy-sequence => copy-seq }, // See slice() in uncommon-utils
+              <string>    => <string>,
+              <table>     => <table>,
+              concatenate   => concat },
+    export: all;
+  use table-extensions,
+    rename: { <case-insensitive-string-table> => <istring-table> },
     export: all;
 end module uncommon-dylan;
 
@@ -49,7 +47,7 @@ define module uncommon-utils
 
   export
     bind,              // like LET* in Common Lisp
-    iff,               // more concise IF, for simple cases
+    iff,               // iff(test, true, false)
     <singleton-object>,
     inc!,              // like ++foo
     dec!,              // like --foo
@@ -65,7 +63,7 @@ define module uncommon-utils
 
     wrapping-inc!,
 
-    <str-trie>,
+    <string-trie>,
     find-object,
     add-object,
     remove-object,
