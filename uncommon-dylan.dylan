@@ -8,7 +8,7 @@ Copyright: See LICENSE in this distribution for details.
 // bind introduces new bindings a la "let", but also introduces a new
 // block to limit the variables' scope.
 //
-// bind (x = 1, y :: <str> = "y")
+// bind (x = 1, y :: <string> = "y")
 //   x + y
 // end
 //
@@ -68,11 +68,11 @@ end macro with-simple-restart;
 // ----------------------------------------------------------------------
 // define class <my-class> (<singleton-object>) ... end
 //
-define open abstract class <singleton-object> (<any>)
+define open abstract class <singleton-object> (<object>)
 end;
 
 // Maps classes to their singleton instances.
-define constant $singletons :: <map> = make(<map>);
+define constant $singletons :: <table> = make(<table>);
 
 define method make
     (class :: subclass(<singleton-object>), #rest args, #key)
@@ -116,7 +116,7 @@ end;
 // getting integer overflow errors.  Should figure out the right
 // way...  -cgay
 //
-define method string-to-float(s :: <str>) => (f :: <float>)
+define method string-to-float(s :: <string>) => (f :: <float>)
   local method is-digit?(ch :: <char>) => (b :: <bool>)
     let v = as(<int>, ch);
     v >= as(<int>, '0') & v <= as(<int>, '9');
@@ -170,8 +170,8 @@ define method string-to-float(s :: <str>) => (f :: <float>)
     process-char(ch);
   end for;
 
-  let lhs = as(<str>, lhs);
-  let rhs = if (empty?(rhs)) "0" else as(<str>, rhs) end;
+  let lhs = as(<string>, lhs);
+  let rhs = iff(empty?(rhs), "0", as(<string>, rhs));
   (string-to-integer(lhs) * sign)
    + as(<double-float>, string-to-integer(rhs) * sign)
      / (10 ^ min(rhs.size, 7));
@@ -183,15 +183,15 @@ end method string-to-float;
 //
 define method float-to-formatted-string
     (value :: <float>, #key decimal-places)
- => (s :: <str>)
+ => (s :: <string>)
   let value = iff(decimal-places,
                   as(<double-float>, truncate(value * 10 ^ min(decimal-places, 7))) / 10d0 ^ decimal-places,
                   value);
   let s = float-to-string(value);
   let dp = subsequence-position(s, ".");
   let tp = subsequence-position(s, "d") | subsequence-position(s, "s") | s.size;
-  let lhs = copy-seq(s, end: dp);
-  let rhs = copy-seq(s, start: dp + 1, end: tp);
+  let lhs = slice(s, 0, dp);
+  let rhs = slice(s, dp + 1, tp);
   let shift = if (tp = s.size) 0  else string-to-integer(s, start: tp + 1) end;
   let result = "";
   let temp = concat(lhs, rhs);
@@ -209,15 +209,15 @@ define method float-to-formatted-string
   end if;
 
   let tsize = temp.size;
-  concat(copy-seq(temp, start: 0, end: min(d + 1, tsize)),
+  concat(slice(temp, 0, min(d + 1, tsize)),
          iff(d = tsize, "", "."),
          iff(d = tsize,
              "",
-             copy-seq(temp,
-                      start: d + 1,
-                      end: iff(decimal-places,
-                               min(d + 1 + decimal-places, tsize),
-                               tsize))));
+             slice(temp,
+                   d + 1,
+                   iff(decimal-places,
+                       min(d + 1 + decimal-places, tsize),
+                       tsize))));
 end method float-to-formatted-string;
 
 
@@ -264,7 +264,7 @@ end method remove-keys;
 // Seems like this should be in the core language.
 //
 define sideways method as
-    (type == <int>, value :: <str>) => (i :: <int>)
+    (type == <int>, value :: <string>) => (i :: <int>)
   string-to-integer(value)
 end;
 
@@ -299,11 +299,11 @@ end;
 // is reached, the theory being that it's common to want to know if there's
 // more than one of the given item.
 define open generic count
-    (collection :: <collection>, predicate :: <func>, #key limit)
+    (collection :: <collection>, predicate :: <fn>, #key limit)
  => (count :: <int>);
 
 define method count
-    (collection :: <collection>, predicate :: <func>,
+    (collection :: <collection>, predicate :: <fn>,
      #key limit :: false-or(<int>))
  => (count :: <int>)
   let count :: <int> = 0;
@@ -320,10 +320,10 @@ end method count;
 
 // This should be fixed not to be specifically for strings.
 
-define class <str-trie> (<any>)
-  constant slot trie-children :: <str-map>,
-    init-function: curry(make, <str-map>);
-  slot trie-object :: <any>,
+define class <string-trie> (<object>)
+  constant slot trie-children :: <string-table>,
+    init-function: curry(make, <string-table>);
+  slot trie-object :: <object>,
     required-init-keyword: object:;
 end;
 
@@ -331,7 +331,7 @@ define class <trie-error> (<format-string-condition>, <error>)
 end;
 
 define method add-object
-    (trie :: <str-trie>, path :: <seq>, object :: <any>,
+    (trie :: <string-trie>, path :: <seq>, object :: <object>,
      #key replace?)
  => ()
   local method real-add (trie, rest-path)
@@ -346,11 +346,11 @@ define method add-object
             end if;
           else
             let first-path = rest-path[0];
-            let other-path = copy-seq(rest-path, start: 1);
+            let other-path = slice(rest-path, 1, #f);
             let children = trie-children(trie);
             let child = element(children, first-path, default: #f);
             unless (child)
-              let node = make(<str-trie>, object: #f);
+              let node = make(<string-trie>, object: #f);
               children[first-path] := node;
               child := node;
             end;
@@ -361,7 +361,7 @@ define method add-object
 end method add-object;
 
 define method remove-object
-    (trie :: <str-trie>, path :: <seq>)
+    (trie :: <string-trie>, path :: <seq>)
  => ()
   let nodes = #[];
   let node = reduce(method (a, b)
@@ -389,8 +389,8 @@ end method remove-object;
 // came after where the object matched.
 //
 define method find-object
-    (trie :: <str-trie>, path :: <seq>)
- => (object :: <any>, rest-path :: <seq>, prefix-path :: <seq>)
+    (trie :: <string-trie>, path :: <seq>)
+ => (object :: <object>, rest-path :: <seq>, prefix-path :: <seq>)
   local method real-find (trie, path, object, prefix, rest)
           if (empty?(path))
             values(object, rest, reverse(prefix))
@@ -422,7 +422,7 @@ define constant <int+> = limited(<int>, min: 1);
 define method slice
     (seq :: <seq>, bpos :: <int*>, epos :: false-or(<int*>))
  => (slice :: <seq>)
-  copy-seq(seq, start: bpos, end: epos | seq.size)
+  copy-sequence(seq, start: bpos, end: epos | seq.size)
 end;
 
 // One of my least favorite things in Dylan is having to switch from

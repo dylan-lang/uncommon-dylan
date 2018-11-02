@@ -4,6 +4,8 @@ Synopsis: Some definitions of general use that could be considered for
 Copyright: See LICENSE in this distribution for details.
 
 define library uncommon-dylan
+  use collections,
+    import: { table-extensions };
   use collection-extensions,
     import: { collection-utilities };
   use common-dylan;
@@ -20,22 +22,18 @@ end;
 // opinion. This is not a comprehensive list; I'll add more as I come
 // across them.
 define module uncommon-dylan
-  // TODO: include some other frequently used basic items, like
-  //       format-out and format-err, directly in uncommon-dylan?
   use common-dylan,
-    rename: { <object>    => <any>,
-              <boolean>   => <bool>,
+    rename: { <boolean>   => <bool>,
               <character> => <char>,
-              <function>  => <func>,
+              <function>  => <fn>,
               <integer>   => <int>,
               <sequence>  => <seq>,
-              <string>    => <str>,
-              <table>     => <map>,
-              <string-table> => <str-map>,
-              <case-insensitive-string-table> => <istr-map>,
-
-              concatenate   => concat,
-              copy-sequence => copy-seq }, // See slice() in uncommon-utils
+              <string>    => <string>,
+              <table>     => <table>,
+              concatenate   => concat },
+    export: all;
+  use table-extensions,
+    rename: { <case-insensitive-string-table> => <istring-table> },
     export: all;
 end module uncommon-dylan;
 
@@ -49,10 +47,10 @@ define module uncommon-utils
 
   export
     bind,              // like LET* in Common Lisp
-    iff,               // more concise IF, for simple cases
+    iff,               // iff(test, true, false)
     <singleton-object>,
-    inc!,              // like ++foo (just call it ++?)
-    dec!,              // like --foo (just call it --?)
+    inc!,              // like ++foo
+    dec!,              // like --foo
     string-to-float,
     // Wasn't sure whether to include this, since FunDev already has
     // float-to-string, but decided to keep it with a different name.
@@ -65,7 +63,7 @@ define module uncommon-utils
 
     wrapping-inc!,
 
-    <str-trie>,
+    <string-trie>,
     find-object,
     add-object,
     remove-object,
