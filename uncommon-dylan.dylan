@@ -5,27 +5,11 @@ Copyright: See LICENSE in this distribution for details.
 
 
 // ----------------------------------------------------------------------
-// bind introduces new bindings a la "let", but also introduces a new
-// block to limit the variables' scope.
-//
-// bind (x = 1, y :: <string> = "y")
-//   x + y
-// end
-//
-define macro bind
-    { bind (?bindings) ?:body end }
- => { begin
-        ?bindings
-        ;
-        ?body
-      end }
-bindings:
-    { } => { }
-    { ?binding, ... } => { ?binding; ... }
-binding:
-    { ?var:variable = ?val:expression }
- => { let ?var = ?val }
-end;
+// Simple type defs
+
+define constant <int*> = limited(<int>, min: 0);
+define constant <int+> = limited(<int>, min: 1);
+
 
 // ----------------------------------------------------------------------
 // iff(test, true-part)
@@ -98,13 +82,6 @@ define macro dec!
   { dec! (?place:expression) }
     => { ?place := ?place - 1; }
 end macro dec!;
-
-define macro wrapping-inc!
-  { wrapping-inc! (?place:expression) }
-    => { let n :: <int> = ?place;
-         ?place := iff(n == $maximum-integer, 0, n + 1);
-       }
-end;
 
 
 // ----------------------------------------------------------------------
@@ -263,20 +240,15 @@ end method remove-keys;
 // ----------------------------------------------------------------------
 // Seems like this should be in the core language.
 //
+// TODO: handle standard prefixes for other radices: 0b, 0, 0x
+// TODO: DON'T skip initial whitespace or allow other cruft at end,
+//       like string-to-integer does.
+// TODO: DO raise a better error type.
+//
 define sideways method as
     (type == <int>, value :: <string>) => (i :: <int>)
   string-to-integer(value)
 end;
-
-// ----------------------------------------------------------------------
-define macro ignore-errors
-    { ignore-errors(?v:variable, ?body:expression) }
- => { block () ?body exception (?v) #f end }
-
-    { ignore-errors(?body:expression) }
- => { block () ?body exception (e :: <error>) #f end }
-end;
-
 
 // ----------------------------------------------------------------------
 // Collections
@@ -292,18 +264,18 @@ define method value-sequence
   v
 end;
 
-// copy-table?
+// copy-table? copy-table-as?
 
 // Count the number of occurrences of item in collection, as determined
 // by the predicate.  'limit' is an efficiency hack: stop counting when limit
 // is reached, the theory being that it's common to want to know if there's
 // more than one of the given item.
 define open generic count
-    (collection :: <collection>, predicate :: <fn>, #key limit)
+    (collection :: <collection>, predicate :: <func>, #key limit)
  => (count :: <int>);
 
 define method count
-    (collection :: <collection>, predicate :: <fn>,
+    (collection :: <collection>, predicate :: <func>,
      #key limit :: false-or(<int>))
  => (count :: <int>)
   let count :: <int> = 0;
@@ -318,7 +290,8 @@ end method count;
 
 //// Tries who's keys are strings
 
-// This should be fixed not to be specifically for strings.
+// TODO: shouldn't be specific to strings.
+// TODO: should have forward-iteration-protocol method.
 
 define class <string-trie> (<object>)
   constant slot trie-children :: <string-table>,
@@ -407,12 +380,6 @@ define method find-object
         end method real-find;
   real-find(trie, as(<list>, path), trie.trie-object, #(), #());
 end method find-object;
-
-
-//// Type defs
-
-define constant <int*> = limited(<int>, min: 0);
-define constant <int+> = limited(<int>, min: 1);
 
 
 //// Collection functions

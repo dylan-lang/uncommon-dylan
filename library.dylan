@@ -8,7 +8,20 @@ define library uncommon-dylan
     import: { table-extensions };
   use collection-extensions,
     import: { collection-utilities };
-  use common-dylan;
+  use common-dylan,
+    // Re-export modules other than common-dylan so it's not necessary
+    // to use both uncommon-dylan and common-dylan.
+    export: { byte-vector,
+              common-extensions,
+              locators-protocol,
+              machine-words,
+              simple-format,
+              simple-io,
+              simple-profiling,
+              simple-random,
+              simple-timers,
+              streams-protocol,
+              transcendentals };
   use io,
     import: { streams };
   export
@@ -17,26 +30,26 @@ define library uncommon-dylan
 end;
 
 
-// A version of common-dylan that has shorter names for some common
-// (and core) definitions, without loss of readability in my
-// opinion. This is not a comprehensive list; I'll add more as I come
-// across them.
+// A version of common-dylan that has shorter names for some of the
+// most commonly used definitions, without loss of readability. There
+// are plenty of other long names in the dylan module, but my goal is
+// to make the most commonly used ones (<integer> being the prime
+// example) slightly less verbose.
 define module uncommon-dylan
   use common-dylan,
     rename: { <boolean>   => <bool>,
               <character> => <char>,
-              <function>  => <fn>,
+              <function>  => <func>,
               <integer>   => <int>,
               <sequence>  => <seq>,
-              <string>    => <string>,
-              <table>     => <table>,
-              concatenate   => concat },
+              concatenate    => concat },
     export: all;
   use table-extensions,
     rename: { <case-insensitive-string-table> => <istring-table> },
     export: all;
 end module uncommon-dylan;
 
+// Utilities
 define module uncommon-utils
   use collection-utilities,
     export: all;
@@ -46,22 +59,19 @@ define module uncommon-utils
               with-output-to-string };
 
   export
-    bind,              // like LET* in Common Lisp
     iff,               // iff(test, true, false)
     <singleton-object>,
-    inc!,              // like ++foo
-    dec!,              // like --foo
     string-to-float,
     // Wasn't sure whether to include this, since FunDev already has
     // float-to-string, but decided to keep it with a different name.
     // --cgay
     float-to-formatted-string,
     remove-keys,        // For removing keywords from #rest arglists.
-    ignore-errors,
     value-sequence,
     count,
 
-    wrapping-inc!,
+    inc!,              // like ++foo
+    dec!,              // like --foo
 
     <string-trie>,
     find-object,
