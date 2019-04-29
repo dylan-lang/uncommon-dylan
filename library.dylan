@@ -16,7 +16,6 @@ define library uncommon-dylan
               locators-protocol,
               machine-words,
               simple-format,
-              simple-io,
               simple-profiling,
               simple-random,
               simple-timers,
